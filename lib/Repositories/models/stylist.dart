@@ -1,3 +1,4 @@
+import 'package:glowup/Repositories/models/appointment.dart';
 import 'package:glowup/Repositories/models/availability_slot.dart';
 
 class Stylist {
@@ -17,6 +18,7 @@ class Stylist {
   late final int? ratingCount;
   late final String createdAt;
   late final String? bio;
+  List<Appointment> appointments = [];
   List<AvailabilitySlot> availabilitySlots = [];
 
   Stylist.fromJson(Map<String, dynamic> json) {

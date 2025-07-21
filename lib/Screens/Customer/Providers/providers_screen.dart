@@ -4,7 +4,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:glowup/CustomWidgets/Customer/Providers/provider_card.dart';
 import 'package:glowup/CustomWidgets/Shared/search_bar.dart';
 import 'package:glowup/Screens/Customer/Providers/bloc/providers_bloc.dart';
-import 'package:glowup/Utilities/extensions/screen_size.dart';
 
 class ProvidersScreen extends StatelessWidget {
   const ProvidersScreen({super.key});

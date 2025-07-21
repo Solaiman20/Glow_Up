@@ -11,11 +11,10 @@ class BookingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => BookingBloc()..add(UpdateUIEvent()),
+      create: (_) => BookingBloc(),
       child: BlocBuilder<BookingBloc, BookingState>(
         builder: (context, state) {
           final bloc = context.read<BookingBloc>();
-          bloc.add(SubscribeToStreamEvent());
           return Scaffold(
             body: Padding(
               padding: EdgeInsets.all(20.h),
@@ -52,10 +51,10 @@ class BookingsScreen extends StatelessWidget {
                           final appointments =
                               bloc.appointmentsMap[bloc.selectedIndex] ?? [];
                           return BookingCard(
-                            appointment: appointments[index],
+                            appointment: appointments[index]!,
                             onPay: () {
                               bloc.add(
-                                ServicePayEvent(appointments[index].id!),
+                                ServicePayEvent(appointments[index]!.id!),
                               );
                             },
                           );

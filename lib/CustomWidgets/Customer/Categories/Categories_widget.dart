@@ -9,6 +9,8 @@ class Categories extends StatelessWidget {
   final String label;
   final String? svgIconPath;
   final VoidCallback onTap;
+  final int width; // Default width
+  final int height; // Default height
 
   const Categories({
     super.key,
@@ -16,6 +18,8 @@ class Categories extends StatelessWidget {
     required this.label,
     this.svgIconPath,
     required this.onTap,
+    this.width = 66,
+    this.height = 66,
   });
 
   @override
@@ -31,8 +35,8 @@ class Categories extends StatelessWidget {
         // mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 66.w,
-            height: 66.h,
+            width: width.w,
+            height: height.h,
             decoration: BoxDecoration(
               color: isSelected ? selectedColor : unselectedColor,
               shape: BoxShape.circle,

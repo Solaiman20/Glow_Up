@@ -15,6 +15,7 @@ class PBookingBloc extends Bloc<PBookingEvent, PBookingState> {
   int selectedIndex = 0;
 
   PBookingBloc() : super(PBookingInitial()) {
+    add(SubscribeToStreamEvent());
     on<PStatusToggleChanged>((event, emit) {
       selectedIndex = event.index;
       emit(StatusToggleChanged());

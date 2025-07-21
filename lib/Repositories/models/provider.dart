@@ -24,6 +24,7 @@ class Provider {
   late int? ratingCount;
   late double? latitude;
   late double? longitude;
+  late String bio;
   String? avatarUrl;
   String? bannerUrl;
 
@@ -46,6 +47,7 @@ class Provider {
     avatarUrl = json['avatar_url'] ?? '';
     bannerUrl = json['banner_url'] ?? '';
     mapsUrl = json['maps_url'] as String?;
+    bio = json['bio'] ?? '';
   }
 
   Map<String, dynamic> toJson() {
@@ -62,6 +64,7 @@ class Provider {
     _data['avatar_url'] = avatarUrl;
     _data['banner_url'] = bannerUrl;
     _data['maps_url'] = mapsUrl;
+    _data['bio'] = bio;
     return _data;
   }
 }

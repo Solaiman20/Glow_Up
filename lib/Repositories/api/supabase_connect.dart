@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:geolocator/geolocator.dart';
@@ -80,40 +81,74 @@ class SupabaseConnect {
     } else {
       log("No user is currently authenticated");
     }
+    log("isLoggedIn");
   }
 
   bool isConflictingAppointment(
-    DateTime date,
-    TimeOfDay time,
+    DateTime selectedDate,
+    DateTime slotStart,
+    int durationMinutes,
     Stylist stylist,
   ) {
-    for (var appt in appointments) {
-      if (appt.stylistId != stylist.id) continue;
-      if (appt.status == "rejected") continue;
+    log("isConflictingAppointment");
+    // Build the candidate interval (with 15m buffer)
+    final candidateStart = DateTime(
+      selectedDate.year,
+      selectedDate.month,
+      selectedDate.day,
+      slotStart.hour,
+      slotStart.minute,
+    ).subtract(const Duration(minutes: 15));
 
-      // 1. Parse the stored date string into a DateTime:
-      //    (handles both "2025-07-30" and full ISO strings)
-      final DateTime apptDateTime = DateTime.parse(appt.appointmentDate);
-      final DateTime apptDate = DateTime(
-        apptDateTime.year,
-        apptDateTime.month,
-        apptDateTime.day,
+    final candidateEnd = candidateStart.add(
+      Duration(minutes: durationMinutes + 30),
+    ); // +15 before & after
+
+    for (var appt in stylist.appointments) {
+      // skip past or rejected appointments
+      if (appt.status == "rejected") {
+        continue;
+      }
+
+      // only compare same calendar day
+      final apptDate = DateTime.parse(appt.appointmentDate);
+      if (apptDate.year != selectedDate.year ||
+          apptDate.month != selectedDate.month ||
+          apptDate.day != selectedDate.day) {
+        continue;
+      }
+
+      // parse the stored start/end times into DateTimes on that date
+      final startParts = appt.appointmentStart.split(':');
+      final apptStart = DateTime(
+        selectedDate.year,
+        selectedDate.month,
+        selectedDate.day,
+        int.parse(startParts[0]),
+        int.parse(startParts[1]),
       );
-      final DateTime selDate = DateTime(date.year, date.month, date.day);
 
-      if (apptDate != selDate) continue;
+      final endParts = appt.appointmentEnd.split(':');
+      final apptEnd = DateTime(
+        selectedDate.year,
+        selectedDate.month,
+        selectedDate.day,
+        int.parse(endParts[0]),
+        int.parse(endParts[1]),
+      );
 
-      // 2. Parse the stored time string "HH:mm:ss" into TimeOfDay:
-      final parts = appt.appointmentStart.split(':');
-      final int apptHour = int.parse(parts[0]);
-      final int apptMinute = int.parse(parts[1]);
-      final TimeOfDay apptTime = TimeOfDay(hour: apptHour, minute: apptMinute);
+      // add 15m buffer around the existing appointment
+      final apptBufferedStart = apptStart.subtract(const Duration(minutes: 15));
+      final apptBufferedEnd = apptEnd.add(const Duration(minutes: 15));
 
-      // 3. Compare TimeOfDay directly:
-      if (apptTime == time) {
+      // check for any overlap between [candidateStart, candidateEnd)
+      // and [apptBufferedStart, apptBufferedEnd)
+      if (candidateStart.isBefore(apptBufferedEnd) &&
+          apptBufferedStart.isBefore(candidateEnd)) {
         return true;
       }
     }
+
     return false;
   }
 
@@ -137,6 +172,7 @@ class SupabaseConnect {
     } catch (e) {
       log("Error fetching data: $e");
     }
+    log("Fetchdata");
   }
 
   Future<void> getAppointments() async {
@@ -155,6 +191,7 @@ class SupabaseConnect {
     } catch (e) {
       log("Error fetching appointments: $e");
     }
+    log("getAppointments");
   }
 
   Future<void> getServiceStylists() async {
@@ -174,6 +211,7 @@ class SupabaseConnect {
     } catch (e) {
       log("Error fetching service stylists: $e");
     }
+    log("getServiceStylists");
   }
 
   Future<void> getServices() async {
@@ -208,6 +246,7 @@ class SupabaseConnect {
     } catch (e) {
       log("Error fetching providers: $e");
     }
+    log("getProviders");
   }
 
   Future<void> getDistancesFromUser() async {
@@ -224,6 +263,7 @@ class SupabaseConnect {
     } catch (e) {
       log("Error fetching distances from user: $e");
     }
+    log("getDistancesFromUser");
   }
 
   Future<void> getStylists() async {
@@ -238,6 +278,7 @@ class SupabaseConnect {
     } catch (e) {
       log("Error fetching stylists: $e");
     }
+    log("getStylists");
   }
 
   Future<void> getAvailabilitySlots() async {
@@ -254,6 +295,7 @@ class SupabaseConnect {
     } catch (e) {
       log("Error fetching availability slots: $e");
     }
+    log("getAvailabilitySlots");
   }
 
   Future<bool> updateEmail(String newEmail) async {
@@ -339,6 +381,81 @@ class SupabaseConnect {
     }
   }
 
+  List<DateTime> getTimeChips({
+    required Stylist stylist,
+    required int durationMinutes,
+    required DateTime selectedDate,
+    int stepMinutes = 15, // granularity
+  }) {
+    log("getTimeChips");
+    // 1. Build availability window as DateTimes on selectedDate:
+    final avail = stylist.availabilitySlots.firstWhere((slot) {
+      final d = DateTime.parse(slot.date);
+      return d.year == selectedDate.year &&
+          d.month == selectedDate.month &&
+          d.day == selectedDate.day;
+    });
+    DateTime day = DateTime(
+      selectedDate.year,
+      selectedDate.month,
+      selectedDate.day,
+    );
+    final startTime = DateFormat('HH:mm').parse(avail.startTime);
+    final endTime = DateFormat('HH:mm').parse(avail.endTime);
+    final windowStart = day.add(
+      Duration(hours: startTime.hour, minutes: startTime.minute),
+    );
+    final windowEnd = day.add(
+      Duration(hours: endTime.hour, minutes: endTime.minute),
+    );
+
+    // 2. Turn your existingAppointments into blocked intervals:
+    final blocked = stylist.appointments
+        .where((a) {
+          var appointmentDate = DateTime.parse(a.appointmentDate);
+          return appointmentDate.year == selectedDate.year &&
+              appointmentDate.month == selectedDate.month &&
+              appointmentDate.day == selectedDate.day;
+        })
+        .map(
+          (a) => Interval(
+            DateFormat("HH:mm").parse(a.appointmentStart),
+            DateFormat("HH:mm")
+                .parse(a.appointmentStart)
+                .add(Duration(minutes: a.service!.durationMinutes)),
+          ),
+        )
+        .toList();
+
+    // 3. “Tick” through the day in small steps, keep only those that fit:
+    List<DateTime> candidates = [];
+    for (
+      var slot = windowStart;
+      slot.add(Duration(minutes: durationMinutes)).isBefore(windowEnd) ||
+          slot
+              .add(Duration(minutes: durationMinutes))
+              .isAtSameMomentAs(windowEnd);
+      slot = slot.add(Duration(minutes: stepMinutes))
+    ) {
+      final slotEnd = slot.add(Duration(minutes: durationMinutes));
+
+      // a) must lie entirely inside availability
+      if (slot.isBefore(windowStart) || slotEnd.isAfter(windowEnd)) continue;
+
+      // b) must not overlap *any* blocked interval
+      bool conflict = blocked.any(
+        (b) => slot.isBefore(b.end) && slotEnd.isAfter(b.start),
+      );
+      if (!conflict) {
+        candidates.add(slot);
+      }
+    }
+    log("getTimeChips: Found ${candidates.length} available time slots");
+    return candidates;
+  }
+
+  // A simple helper struct for clarity:
+
   Future<void> bookAppointment({
     required String appointmentDate,
     required String appointmentStart,
@@ -376,6 +493,7 @@ class SupabaseConnect {
     } catch (e) {
       log("Error booking appointment: $e");
     }
+    log("bookAppointment");
   }
 
   void linkData() {
@@ -459,6 +577,14 @@ class SupabaseConnect {
         }
       }
     }
+    // linking stylists with their appointments
+    for (Stylist stylist in stylists) {
+      for (Appointment appointment in appointments) {
+        if (appointment.stylistId == stylist.id) {
+          stylist.appointments.add(appointment);
+        }
+      }
+    }
     // linking services with their provider
     for (Services service in services) {
       for (Provider provider in providers) {
@@ -490,71 +616,77 @@ class SupabaseConnect {
     log("Data linked in ${stopwatch.elapsedMicroseconds} µs");
   }
 
-  Map<int, List<Appointment>> getUserAppointments(
-    List<Appointment> appointmentsStream,
+  Map<int, List<Appointment?>> getUserAppointments(
+    List<Appointment?> appointmentsStream,
   ) {
-    List<Appointment> pendingAppointments = [];
-    List<Appointment> statusAppointments = [];
-    List<Appointment> completedAppointments = [];
-    List<Appointment> paidAppointments = [];
-    Map<int, List<Appointment>> userAppointments = {
+    List<Appointment?> pendingAppointments = [];
+    List<Appointment?> statusAppointments = [];
+    List<Appointment?> completedAppointments = [];
+    List<Appointment?> paidAppointments = [];
+    Map<int, List<Appointment?>> userAppointments = {
       0: pendingAppointments,
       1: statusAppointments,
       2: paidAppointments,
       3: completedAppointments,
     };
     // linking appointments with their stylist
-    for (Appointment appointment in appointmentsStream) {
-      for (Stylist stylist in stylists) {
-        if (appointment.stylistId == stylist.id) {
-          appointment.stylist = stylist;
+    if (appointmentsStream.isNotEmpty) {
+      for (Appointment? appointment in appointmentsStream) {
+        for (Stylist stylist in stylists) {
+          if (appointment!.stylistId == stylist.id) {
+            appointment.stylist = stylist;
+          }
+        }
+        // linking appointments with their stylist
+        for (Stylist stylist in stylists) {
+          if (appointment!.stylistId == stylist.id) {
+            appointment.stylist = stylist;
+          }
+        }
+        for (Provider provider in providers) {
+          if (appointment!.providerId == provider.id) {
+            appointment.provider = provider;
+          }
+        }
+        for (Services service in services) {
+          if (appointment!.serviceId == service.id) {
+            appointment.service = service;
+          }
         }
       }
-      // linking appointments with their stylist
-      for (Stylist stylist in stylists) {
-        if (appointment.stylistId == stylist.id) {
-          appointment.stylist = stylist;
-        }
-      }
-      for (Provider provider in providers) {
-        if (appointment.providerId == provider.id) {
-          appointment.provider = provider;
-        }
-      }
-      for (Services service in services) {
-        if (appointment.serviceId == service.id) {
-          appointment.service = service;
-        }
-      }
-    }
 
-    for (var appointment in appointmentsStream) {
-      if (appointment.customerId == userProfile!.id) {
-        switch (appointment.status) {
-          case "Pending":
-            pendingAppointments.add(appointment);
-            break;
-          case "Accepted":
-            statusAppointments.add(appointment);
-            break;
-          case "Completed":
-            completedAppointments.add(appointment);
-            break;
-          case "Rejected":
-            statusAppointments.add(appointment);
-            break;
-          case "Paid":
-            paidAppointments.add(appointment);
-            break;
+      for (var appointment in appointmentsStream) {
+        if (appointment!.customerId == userProfile!.id) {
+          switch (appointment.status) {
+            case "Pending":
+              pendingAppointments.add(appointment);
+              break;
+            case "Accepted":
+              statusAppointments.add(appointment);
+              break;
+            case "Completed":
+              completedAppointments.add(appointment);
+              break;
+            case "Rejected":
+              statusAppointments.add(appointment);
+              break;
+            case "Paid":
+              paidAppointments.add(appointment);
+              break;
+          }
         }
       }
     }
+    log(
+      "getUserAppointments: Found ${userAppointments.length} user appointments",
+    );
     return userAppointments;
   }
 
   Map<int, List<Appointment>> getProviderAppointments(
     List<Appointment> appointmentsStream,
   ) {
+    log("getProvidersAppointments");
     List<Appointment> pendingAppointments = [];
     List<Appointment> statusAppointments = [];
     List<Appointment> completedAppointments = [];
@@ -608,10 +740,14 @@ class SupabaseConnect {
           break;
       }
     }
+    log(
+      "getProviderAppointments: Found ${providerAppointments.length} provider appointments",
+    );
     return providerAppointments;
   }
 
   Future<void> acceptAppointment(int appointmentId) async {
+    log("accept appointment");
     final resClient = supabase.client;
     try {
       await resClient
@@ -622,9 +758,11 @@ class SupabaseConnect {
     } catch (e) {
       log("Error accepting appointment: $e");
     }
+    log("acceptAppointment");
   }
 
   Future<void> rejectAppointment(int appointmentId) async {
+    log("reject appointment");
     final resClient = supabase.client;
     try {
       await resClient
@@ -635,9 +773,11 @@ class SupabaseConnect {
     } catch (e) {
       log("Error rejecting appointment: $e");
     }
+    log("rejectAppointment");
   }
 
   Future<void> completeAppointment(int appointmentId) async {
+    log("complete appointment");
     final resClient = supabase.client;
     try {
       await resClient
@@ -648,9 +788,11 @@ class SupabaseConnect {
     } catch (e) {
       log("Error completing appointment: $e");
     }
+    log("completeAppointment");
   }
 
   Stream<List<Appointment>> watchProviderAppointments() {
+    log("watchProviderAppointments called");
     // listen on any change (INSERT, UPDATE, DELETE) keyed by 'id'
     return supabase.client
         .from('appointments') // filter to this provider
@@ -661,6 +803,7 @@ class SupabaseConnect {
   }
 
   Future<void> payForAppointment(int appointmentId) async {
+    log("payforappointments");
     final resClient = supabase.client;
     try {
       await resClient
@@ -671,16 +814,31 @@ class SupabaseConnect {
     } catch (e) {
       log("Error paying for appointment: $e");
     }
+    log("payForAppointment");
   }
 
-  Stream<List<Appointment>> watchUserAppointments() {
+  Stream<List<Appointment?>> watchUserAppointments() {
+    log("watchUserAppointments called");
+    final now = DateTime.now();
+    final todayMidnight = DateTime(now.year, now.month, now.day);
+    final isoTodayMidnight = todayMidnight;
     // listen on any change (INSERT, UPDATE, DELETE) keyed by 'id'
     return supabase.client
         .from('appointments') // filter to this provider
         .stream(primaryKey: ['id'])
         .eq("customer_id", userProfile!.id) // use the primary key to dedupe
-        .order('appointment_date') // optional ordering
-        .map((records) => records.map((e) => Appointment.fromJson(e)).toList());
+        .order('appointment_date')
+        // optional ordering
+        .map(
+          (records) => records.map((e) {
+            var appointment = Appointment.fromJson(e);
+            if (DateTime.parse(
+              appointment.appointmentDate,
+            ).isBefore(isoTodayMidnight)) {
+              return appointment;
+            }
+          }).toList(),
+        );
   }
 
   Future<bool> addService({
@@ -693,6 +851,9 @@ class SupabaseConnect {
     required List<Stylist> selectedStylists,
     bool atHome = false,
   }) async {
+    log(
+      "Adding service: $name, $description, $price, $durationMinutes, $category, atHome: $atHome",
+    );
     final resClient = supabase.client;
     try {
       final newService = Services(
@@ -736,6 +897,7 @@ class SupabaseConnect {
   }
 
   Future<void> deleteService(int serviceId) async {
+    log("Deleting service with ID: $serviceId");
     final resClient = supabase.client;
     try {
       await resClient.from("services").delete().eq("id", serviceId);
@@ -752,6 +914,7 @@ class SupabaseConnect {
     String? bio,
     required String providerId,
   }) async {
+    log("Adding stylist: $name, providerId: $providerId, bio: $bio");
     final resClient = supabase.client;
     try {
       final newStylist = Stylist(
@@ -784,6 +947,7 @@ class SupabaseConnect {
     required Stylist stylist,
     required List<AvailabilitySlot> availabilityDatesAndTimes,
   }) async {
+    log("Editing stylist schedule for: ${stylist.name}");
     final resClient = supabase.client;
     try {
       for (AvailabilitySlot availableDateAndTime in availabilityDatesAndTimes) {
@@ -1146,4 +1310,9 @@ class SupabaseConnect {
       return false;
     }
   }
+}
+
+class Interval {
+  final DateTime start, end;
+  Interval(this.start, this.end);
 }

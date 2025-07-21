@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:glowup/CustomWidgets/Customer/Providers/provider_tag.dart';
 import 'package:glowup/CustomWidgets/Customer/Services/service_card.dart';
 import 'package:glowup/Repositories/models/provider.dart';
+import 'package:glowup/Screens/Customer/ProvidersProfileDetails/providers_profile_details_screen.dart';
 import 'package:glowup/Utilities/extensions/screen_size.dart';
 
 class ProviderCard extends StatelessWidget {
@@ -16,7 +17,17 @@ class ProviderCard extends StatelessWidget {
       children: [
         Padding(
           padding: EdgeInsets.only(left: 32.w),
-          child: ProviderTag(theProvider: provider),
+          child: GestureDetector(
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) =>
+                      ProvidersProfileDetailsScreen(provider: provider),
+                ),
+              );
+            },
+            child: ProviderTag(theProvider: provider),
+          ),
         ),
         SizedBox(height: 20.h),
         Padding(

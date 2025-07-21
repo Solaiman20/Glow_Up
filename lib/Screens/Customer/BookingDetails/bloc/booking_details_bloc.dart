@@ -17,8 +17,9 @@ class BookingDetailsBloc
   final supabase = GetIt.I.get<SupabaseConnect>();
   Stylist? selectedStylist;
   DateTime? selectedDate = DateTime.now();
+  bool dateSelected = false;
   DateTime? selectedTime;
-  int? startTime;
+  List<DateTime> timeChips = [];
 
   int chipsLength = 0;
   BookingDetailsBloc() : super(BookingDetailsInitial()) {
@@ -32,27 +33,18 @@ class BookingDetailsBloc
     on<SelectDateEvent>((event, emit) {
       selectedDate = event.day;
       selectedTime = null;
-      if (selectedStylist?.availabilitySlots != null &&
-          selectedStylist!.availabilitySlots.isNotEmpty) {
-        var availableSlot = selectedStylist!.availabilitySlots.where((slot) {
-          return "${DateTime.parse(slot.date).month}/${DateTime.parse(slot.date).day}" ==
-              "${event.focusedDay.month}/${event.focusedDay.day}";
-        }).first;
-
-        final format = DateFormat('HH:mm');
-        var startingTime = format.parse(availableSlot.startTime);
-        var endTime = format.parse(availableSlot.endTime);
-        var timeLength = endTime.difference(startingTime);
-        startTime = startingTime.hour * 60;
-
-        chipsLength = timeLength.inMinutes ~/ 30;
-      }
+      dateSelected = true;
+      timeChips = supabase.getTimeChips(
+        stylist: selectedStylist!,
+        selectedDate: selectedDate!,
+        durationMinutes: event.service.durationMinutes,
+      );
 
       emit(DateSelectedState());
     });
     on<SelectTimeEvent>((event, emit) {
       var format = DateFormat('HH:mm');
-      selectedTime = format.parse(event.label);
+      selectedTime = format.parse(event.selectedTime.toString());
 
       log("Selected time: ${selectedTime!.hour}:${selectedTime!.minute}");
       emit(TimeSelectedState());
@@ -72,7 +64,6 @@ class BookingDetailsBloc
       Navigator.of(event.context).pop();
       selectedDate = DateTime.now();
       selectedTime = null;
-      startTime = null;
       selectedStylist = null;
     });
   }

@@ -55,6 +55,8 @@ class ServiceDescription extends StatelessWidget {
                   ),
                   SizedBox(height: 4.h),
                   Text("SAR ${service.price.toStringAsFixed(0)}"),
+                  SizedBox(height: 4.h),
+                  Text("${service.durationMinutes} minutes"),
                 ],
               ),
             ],

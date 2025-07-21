@@ -1,68 +1,69 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class AppFonts {
-  static const TextStyle medium18 = TextStyle(
+  static TextStyle medium18 = TextStyle(
     fontFamily: 'MontserratAlternates',
     fontWeight: FontWeight.w500,
-    fontSize: 18,
+    fontSize: 18.sp,
   );
 
-  static const TextStyle bold20 = TextStyle(
+  static TextStyle bold20 = TextStyle(
     fontFamily: 'MontserratAlternates',
     fontWeight: FontWeight.w700,
-    fontSize: 20,
+    fontSize: 20.sp,
   );
 
-  static const TextStyle light16 = TextStyle(
+  static TextStyle light16 = TextStyle(
     fontFamily: 'MontserratAlternates',
     fontWeight: FontWeight.w300,
-    fontSize: 16,
+    fontSize: 16.sp,
   );
 
-  static const TextStyle semiBold24 = TextStyle(
+  static TextStyle semiBold24 = TextStyle(
     fontFamily: 'MontserratAlternates',
     fontWeight: FontWeight.w900,
-    fontSize: 24,
+    fontSize: 24.sp,
   );
 
-  static const TextStyle regular14 = TextStyle(
+  static TextStyle regular14 = TextStyle(
     fontFamily: 'MontserratAlternates',
     fontWeight: FontWeight.w400,
-    fontSize: 14,
+    fontSize: 14.sp,
   );
 
-  static const TextStyle regular22 = TextStyle(
+  static TextStyle regular22 = TextStyle(
     fontFamily: 'MontserratAlternates',
     fontWeight: FontWeight.w300,
-    fontSize: 22,
+    fontSize: 22.sp,
   );
 
-  static const TextStyle thin12 = TextStyle(
+  static TextStyle thin12 = TextStyle(
     fontFamily: 'MontserratAlternates',
     fontWeight: FontWeight.w100,
-    fontSize: 12,
+    fontSize: 12.sp,
   );
 
-  static const TextStyle black26 = TextStyle(
+  static TextStyle black26 = TextStyle(
     fontFamily: 'MontserratAlternates',
     fontWeight: FontWeight.w900,
-    fontSize: 26,
+    fontSize: 26.sp,
   );
 
-  static const TextStyle italic16 = TextStyle(
+  static TextStyle italic16 = TextStyle(
     fontFamily: 'MontserratAlternates',
     fontWeight: FontWeight.w400,
     fontStyle: FontStyle.italic,
-    fontSize: 16,
+    fontSize: 16.sp,
   );
-   static const TextStyle black48 = TextStyle(
+  static TextStyle black48 = TextStyle(
     fontFamily: 'MontserratAlternates',
     fontWeight: FontWeight.w900,
-    fontSize: 48,
+    fontSize: 48.sp,
   );
-   static const TextStyle black32 = TextStyle(
+  static TextStyle black32 = TextStyle(
     fontFamily: 'MontserratAlternates',
     fontWeight: FontWeight.w900,
-    fontSize: 32,
+    fontSize: 32.sp,
   );
 }

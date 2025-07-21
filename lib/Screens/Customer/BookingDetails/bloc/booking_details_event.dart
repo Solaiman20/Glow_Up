@@ -11,14 +11,15 @@ final class ChooseStylistEvent extends BookingDetailsEvent {
 final class SelectDateEvent extends BookingDetailsEvent {
   final DateTime day;
   final DateTime focusedDay;
+  final Services service;
 
-  SelectDateEvent(this.day, this.focusedDay);
+  SelectDateEvent(this.day, this.focusedDay, this.service);
 }
 
 final class SelectTimeEvent extends BookingDetailsEvent {
-  final String label;
+  final DateTime selectedTime;
 
-  SelectTimeEvent(this.label);
+  SelectTimeEvent(this.selectedTime);
 }
 
 final class BookAppointmentEvent extends BookingDetailsEvent {

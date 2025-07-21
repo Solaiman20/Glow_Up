@@ -46,87 +46,94 @@ class LoginScreen extends StatelessWidget {
             },
             child: Scaffold(
               resizeToAvoidBottomInset: true,
-              body: Column(
-                children: [
-                  SizedBox(height: 64.h),
+              body: SingleChildScrollView(
+                child: SizedBox(
+                  height: 952.h,
+                  width: 402.w,
+                  child: Column(
+                    children: [
+                      SizedBox(height: 64.h),
 
-                  Image.asset(
-                    "assets/images/logo1.png",
-                    height: 200.h,
-                    width: 200.w,
-                    fit: BoxFit.cover,
-                  ),
-                  Spacer(),
-                  BlocBuilder<LoginBloc, LoginState>(
-                    builder: (context, state) {
-                      return BackgroundContainer(
-                        heightSize: 0.7,
-                        childWidget: Column(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            SizedBox(),
-                            Text(
-                              context.tr("Welcome Back"),
-                              style: AppFonts.semiBold24,
-                            ),
-                            SizedBox(),
-                            Form(
-                              key: bloc.loginFormKey,
-                              child: Column(
-                                children: [
-                                  CustomTextfield(
-                                    textFieldHint: context.tr("Email"),
-                                    textFieldcontroller: bloc.emailController,
-                                    validationMethod: (value) {
-                                      final error = bloc.emailValidation(
-                                        text: value,
-                                      );
-                                      return error == null
-                                          ? null
-                                          : context.tr(error);
-                                    },
+                      Image.asset(
+                        "assets/images/logo1.png",
+                        height: 200.h,
+                        width: 200.w,
+                        fit: BoxFit.cover,
+                      ),
+                      Spacer(),
+                      BlocBuilder<LoginBloc, LoginState>(
+                        builder: (context, state) {
+                          return BackgroundContainer(
+                            heightSize: 0.7,
+                            childWidget: Column(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                SizedBox(),
+                                Text(
+                                  context.tr("Welcome Back"),
+                                  style: AppFonts.semiBold24,
+                                ),
+                                SizedBox(),
+                                Form(
+                                  key: bloc.loginFormKey,
+                                  child: Column(
+                                    children: [
+                                      CustomTextfield(
+                                        textFieldHint: context.tr("Email"),
+                                        textFieldcontroller:
+                                            bloc.emailController,
+                                        validationMethod: (value) {
+                                          final error = bloc.emailValidation(
+                                            text: value,
+                                          );
+                                          return error == null
+                                              ? null
+                                              : context.tr(error);
+                                        },
+                                      ),
+                                      CustomTextfield(
+                                        textFieldHint: context.tr("Password"),
+                                        isPassword: true,
+                                        textFieldcontroller:
+                                            bloc.passwordController,
+                                        validationMethod: (value) {
+                                          final error = bloc.passwordValidation(
+                                            text: value,
+                                          );
+                                          return error == null
+                                              ? null
+                                              : context.tr(error);
+                                        },
+                                      ),
+                                    ],
                                   ),
-                                  CustomTextfield(
-                                    textFieldHint: context.tr("Password"),
-                                    isPassword: true,
-                                    textFieldcontroller:
-                                        bloc.passwordController,
-                                    validationMethod: (value) {
-                                      final error = bloc.passwordValidation(
-                                        text: value,
-                                      );
-                                      return error == null
-                                          ? null
-                                          : context.tr(error);
-                                    },
+                                ),
+
+                                CustomElevatedButton(
+                                  text: context.tr("Login"),
+                                  onTap: () {
+                                    bloc.add(ValidateLogin(context: context));
+                                  },
+                                ),
+
+                                OntapText(
+                                  text: context.tr(
+                                    "Don't have an account?  SignUp",
                                   ),
-                                ],
-                              ),
+                                  pressedMethod: () {
+                                    Navigator.pushNamed(context, '/signup');
+                                  },
+                                ),
+                                SizedBox(height: 20.h),
+                              ],
                             ),
-
-                            CustomElevatedButton(
-                              text: context.tr("Login"),
-                              onTap: () {
-                                bloc.add(ValidateLogin(context: context));
-                              },
-                            ),
-
-                            OntapText(
-                              text: context.tr(
-                                "Don't have an account?  SignUp",
-                              ),
-                              pressedMethod: () {
-                                Navigator.pushNamed(context, '/signup');
-                              },
-                            ),
-                            SizedBox(height: 20.h),
-                          ],
-                        ),
-                      );
-                    },
+                          );
+                        },
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           );

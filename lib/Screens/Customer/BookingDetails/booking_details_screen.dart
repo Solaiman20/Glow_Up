@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:glowup/CustomWidgets/Customer/BookingDetails/service_description.dart';
+import 'package:glowup/CustomWidgets/Customer/BookingDetails/time_chip_section.dart';
 import 'package:glowup/CustomWidgets/Shared/custom_calendar.dart';
 import 'package:glowup/CustomWidgets/Shared/custom_elevated_button.dart';
 import 'package:glowup/Repositories/models/services.dart';
@@ -40,7 +41,6 @@ class BookingDetailsScreen extends StatelessWidget {
                   ServiceDescription(service: service),
                   SizedBox(height: 16.h),
                   Container(
-                    height: 900.h,
                     width: 370.w,
                     decoration: BoxDecoration(
                       color: AppColors.white,
@@ -139,76 +139,76 @@ class BookingDetailsScreen extends StatelessWidget {
                               bloc.selectedStylist ?? service.stylists.first,
                           currentDay: bloc.selectedDate!,
                           onDaySelected: (day, focusedDay) {
-                            bloc.add(SelectDateEvent(day, focusedDay));
+                            bloc.add(SelectDateEvent(day, focusedDay, service));
                           },
                           selectedDayPredicate: (day) =>
                               isSameDay(day, bloc.selectedDate),
                         ),
-                        Padding(
-                          padding: EdgeInsets.symmetric(
-                            vertical: 8.h,
-                            horizontal: 24.w,
-                          ),
-                          child: Align(
-                            alignment: Alignment.centerLeft,
-                            child: Text("Choose time", style: AppFonts.bold20),
-                          ),
-                        ),
-                        SizedBox(
-                          height: 200.h,
-                          width: 370.w,
-                          child: Align(
-                            alignment: Alignment.topCenter,
-                            child: Wrap(
-                              crossAxisAlignment: WrapCrossAlignment.center,
-                              spacing: 8.w,
-                              children: List.generate(bloc.chipsLength, (
-                                index,
-                              ) {
-                                final addedMinutes = index * 30;
-                                final totalMinutes =
-                                    bloc.startTime! + addedMinutes;
-                                final hours = totalMinutes ~/ 60;
-                                final minutes = totalMinutes % 60;
-                                final label =
-                                    "$hours:${minutes.toString().padLeft(2, '0')}";
-                                return Padding(
-                                  padding: EdgeInsets.all(4.w),
-                                  child: ChoiceChip(
-                                    label: Text(label),
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: 12.w,
-                                      vertical: 8.h,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(30.r),
-                                    ),
-                                    selected:
-                                        (bloc.selectedTime?.hour == hours &&
-                                        bloc.selectedTime?.minute == minutes),
-                                    selectedColor: AppColors.goldenPeach,
-                                    backgroundColor: AppColors.calendarDay,
-                                    disabledColor:
-                                        AppColors.disabledCalendarDay,
-                                    onSelected:
-                                        bloc.supabase.isConflictingAppointment(
-                                          bloc.selectedDate!,
-                                          TimeOfDay(
-                                            hour: hours,
-                                            minute: minutes,
-                                          ),
-                                          bloc.selectedStylist!,
-                                        )
-                                        ? null
-                                        : (value) {
-                                            bloc.add(SelectTimeEvent(label));
-                                          },
-                                  ),
-                                );
-                              }),
+                        if (bloc.dateSelected)
+                          Padding(
+                            padding: EdgeInsets.symmetric(
+                              vertical: 8.h,
+                              horizontal: 24.w,
+                            ),
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                "Choose time",
+                                style: AppFonts.bold20,
+                              ),
                             ),
                           ),
-                        ),
+                        if (bloc.dateSelected)
+                          SizedBox(
+                            width: 370.w,
+                            child: Align(
+                              alignment: Alignment.topCenter,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  BlocProvider.value(
+                                    value: bloc,
+                                    child: TimeChipSection(
+                                      title: "Morning",
+
+                                      slots: bloc.timeChips
+                                          .where((t) => t.hour < 12)
+                                          .toList(),
+
+                                      durationMinutes: service.durationMinutes,
+                                      stylist: bloc.selectedStylist!,
+                                    ),
+                                  ),
+                                  BlocProvider.value(
+                                    value: bloc,
+                                    child: TimeChipSection(
+                                      title: "Afternoon",
+                                      slots: bloc.timeChips
+                                          .where(
+                                            (t) => t.hour >= 12 && t.hour < 18,
+                                          )
+                                          .toList(),
+
+                                      durationMinutes: service.durationMinutes,
+                                      stylist: bloc.selectedStylist!,
+                                    ),
+                                  ),
+                                  BlocProvider.value(
+                                    value: bloc,
+                                    child: TimeChipSection(
+                                      title: "Evening",
+                                      slots: bloc.timeChips
+                                          .where((t) => t.hour >= 18)
+                                          .toList(),
+
+                                      durationMinutes: service.durationMinutes,
+                                      stylist: bloc.selectedStylist!,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                       ],
                     ),
                   ),

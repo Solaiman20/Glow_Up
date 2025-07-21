@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class ProvidersProfileDetailsScreen extends StatelessWidget {
-  const ProvidersProfileDetailsScreen({super.key});
+class ProviderCategoryTag extends StatelessWidget {
+  const ProviderCategoryTag({super.key});
 
   @override
   Widget build(BuildContext context) {

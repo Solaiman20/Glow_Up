@@ -14,114 +14,102 @@ class PBookingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => PBookingBloc(),
-      child: Builder(
-        builder: (context) {
+      child: BlocBuilder<PBookingBloc, PBookingState>(
+        builder: (context, state) {
           final bloc = context.read<PBookingBloc>();
-          bloc.add(SubscribeToStreamEvent());
-          return BlocBuilder<PBookingBloc, PBookingState>(
-            builder: (context, state) {
-              return BlocListener<PBookingBloc, PBookingState>(
-                listener: (context, state) {
-                  if (state is ErrorUpdatingStream) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(state.errorMessage),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                  }
-                  if (state is CompleteAppointmentSuccess) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(state.message),
-                        backgroundColor: Colors.green,
-                      ),
-                    );
-                  }
-                  if (state is CompleteAppointmentError) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(state.errorMessage),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                  }
-                },
-                child: Scaffold(
-                  body: Padding(
-                    padding: EdgeInsets.all(20.r),
-                    child: SafeArea(
-                      child: SingleChildScrollView(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            StatusToggle(
-                              selectedIndex: bloc.selectedIndex,
-                              onSelected: (int index) {
-                                context.read<PBookingBloc>().add(
-                                  PStatusToggleChanged(index),
-                                );
-                              },
-                            ),
-
-                            SizedBox(height: 24.h),
-                            if (bloc.appointmentsMap[bloc.selectedIndex] ==
-                                    null ||
-                                bloc
-                                    .appointmentsMap[bloc.selectedIndex]!
-                                    .isEmpty)
-                              Center(
-                                child: Text(
-                                  "No bookings available",
-                                  style: Theme.of(context).textTheme.bodyLarge,
-                                ),
-                              ),
-                            if (bloc.appointmentsMap[bloc.selectedIndex] !=
-                                    null &&
-                                bloc
-                                    .appointmentsMap[bloc.selectedIndex]!
-                                    .isNotEmpty)
-                              ...List.generate(
-                                bloc
-                                    .appointmentsMap[bloc.selectedIndex]!
-                                    .length,
-                                (index) {
-                                  final appointments =
-                                      bloc.appointmentsMap[bloc
-                                          .selectedIndex] ??
-                                      [];
-                                  return PBookingCard(
-                                    appointment: appointments[index],
-                                    onAccept: () => bloc.add(
-                                      AcceptAppointmentEvent(
-                                        bloc.appointmentsMap[bloc
-                                            .selectedIndex]![index],
-                                      ),
-                                    ),
-                                    onDecline: () => bloc.add(
-                                      RejectAppointmentEvent(
-                                        bloc.appointmentsMap[bloc
-                                            .selectedIndex]![index],
-                                      ),
-                                    ),
-                                    onComplete: () => bloc.add(
-                                      CompleteAppointmentEvent(
-                                        bloc.appointmentsMap[bloc
-                                            .selectedIndex]![index],
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                            SizedBox(height: 60.h),
-                          ],
+          return BlocListener<PBookingBloc, PBookingState>(
+            listener: (context, state) {
+              if (state is ErrorUpdatingStream) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(state.errorMessage),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+              if (state is CompleteAppointmentSuccess) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(state.message),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              }
+              if (state is CompleteAppointmentError) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(state.errorMessage),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            },
+            child: Scaffold(
+              body: Padding(
+                padding: EdgeInsets.all(20.r),
+                child: SafeArea(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        StatusToggle(
+                          selectedIndex: bloc.selectedIndex,
+                          onSelected: (int index) {
+                            context.read<PBookingBloc>().add(
+                              PStatusToggleChanged(index),
+                            );
+                          },
                         ),
-                      ),
+
+                        SizedBox(height: 24.h),
+                        if (bloc.appointmentsMap[bloc.selectedIndex] == null ||
+                            bloc.appointmentsMap[bloc.selectedIndex]!.isEmpty)
+                          Center(
+                            child: Text(
+                              "No bookings available",
+                              style: Theme.of(context).textTheme.bodyLarge,
+                            ),
+                          ),
+                        if (bloc.appointmentsMap[bloc.selectedIndex] != null &&
+                            bloc
+                                .appointmentsMap[bloc.selectedIndex]!
+                                .isNotEmpty)
+                          ...List.generate(
+                            bloc.appointmentsMap[bloc.selectedIndex]!.length,
+                            (index) {
+                              final appointments =
+                                  bloc.appointmentsMap[bloc.selectedIndex] ??
+                                  [];
+                              return PBookingCard(
+                                appointment: appointments[index],
+                                onAccept: () => bloc.add(
+                                  AcceptAppointmentEvent(
+                                    bloc.appointmentsMap[bloc
+                                        .selectedIndex]![index],
+                                  ),
+                                ),
+                                onDecline: () => bloc.add(
+                                  RejectAppointmentEvent(
+                                    bloc.appointmentsMap[bloc
+                                        .selectedIndex]![index],
+                                  ),
+                                ),
+                                onComplete: () => bloc.add(
+                                  CompleteAppointmentEvent(
+                                    bloc.appointmentsMap[bloc
+                                        .selectedIndex]![index],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        SizedBox(height: 60.h),
+                      ],
                     ),
                   ),
                 ),
-              );
-            },
+              ),
+            ),
           );
         },
       ),
