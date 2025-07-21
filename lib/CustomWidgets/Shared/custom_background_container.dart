@@ -24,7 +24,6 @@ class CustomBackgroundContainer extends StatelessWidget {
           : EdgeInsetsGeometry.symmetric(horizontal: 36.w),
       child: Container(
         width: 402.w,
-        height: height.h,
         decoration: BoxDecoration(
           color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(12.r),

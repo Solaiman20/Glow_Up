@@ -90,47 +90,47 @@ class ProfileScreen extends StatelessWidget {
                 bloc.languageSwitchValue = 0;
               }
 
-              return Center(
-                child: Column(
-                  children: [
-                    SizedBox(height: 60.h),
-                    GestureDetector(
-                      onTap: () {
-                        bloc.add(UpdateUserAvatar());
-                      },
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(60.r),
-                        child: CachedNetworkImage(
-                          imageUrl: bloc.supabase.userProfile!.avatarUrl!,
-                          height: 120.h,
-                          width: 120.w,
-                          fit: BoxFit.cover,
-                          placeholder: (context, url) => Center(
-                            child: CircularProgressIndicator(
-                              color: AppColors.softBrown,
+              return SingleChildScrollView(
+                child: Center(
+                  child: Column(
+                    children: [
+                      SizedBox(height: 60.h),
+                      GestureDetector(
+                        onTap: () {
+                          bloc.add(UpdateUserAvatar());
+                        },
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(60.r),
+                          child: CachedNetworkImage(
+                            imageUrl: bloc.supabase.userProfile!.avatarUrl!,
+                            height: 120.h,
+                            width: 120.w,
+                            fit: BoxFit.cover,
+                            placeholder: (context, url) => Center(
+                              child: CircularProgressIndicator(
+                                color: AppColors.softBrown,
+                              ),
                             ),
+                            errorWidget: (context, url, error) {
+                              return Image.asset(
+                                "assets/images/profile.png",
+                                height: 120.h,
+                                width: 120.h,
+                                fit: BoxFit.cover,
+                              );
+                            },
                           ),
-                          errorWidget: (context, url, error) {
-                            return Image.asset(
-                              "assets/images/profile.png",
-                              height: 120.h,
-                              width: 120.h,
-                              fit: BoxFit.cover,
-                            );
-                          },
                         ),
                       ),
-                    ),
-                    SizedBox(height: 20.h),
-                    Text(
-                      bloc.supabase.userProfile!.username!,
-                      style: AppFonts.semiBold24,
-                    ),
+                      SizedBox(height: 20.h),
+                      Text(
+                        bloc.supabase.userProfile!.username!,
+                        style: AppFonts.semiBold24,
+                      ),
 
-                    SizedBox(height: 20),
-                    CustomBackgroundContainer(
-                      childWidget: SingleChildScrollView(
-                        child: Column(
+                      SizedBox(height: 20),
+                      CustomBackgroundContainer(
+                        childWidget: Column(
                           children: [
                             ListTile(
                               leading: Icon(Icons.badge_outlined),
@@ -167,10 +167,7 @@ class ProfileScreen extends StatelessWidget {
                                 );
                               },
                             ),
-                            Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 16.w),
-                              child: Divider(color: Colors.amber),
-                            ),
+                            Divider(),
 
                             ListTile(
                               leading: Icon(Icons.phone),
@@ -347,11 +344,12 @@ class ProfileScreen extends StatelessWidget {
                             ),
                           ],
                         ),
+                        paddingSize: false,
+                        height: 100,
                       ),
-                      height: 520,
-                      paddingSize: false,
-                    ),
-                  ],
+                      SizedBox(height: 110.h),
+                    ],
+                  ),
                 ),
               );
             },

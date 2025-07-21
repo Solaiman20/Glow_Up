@@ -15,11 +15,6 @@ class PBookingBloc extends Bloc<PBookingEvent, PBookingState> {
   int selectedIndex = 0;
 
   PBookingBloc() : super(PBookingInitial()) {
-    add(SubscribeToStreamEvent());
-    on<PStatusToggleChanged>((event, emit) {
-      selectedIndex = event.index;
-      emit(StatusToggleChanged());
-    });
     on<SubscribeToStreamEvent>((event, emit) async {
       await emit.forEach<List<Appointment>>(
         GetIt.I.get<SupabaseConnect>().watchProviderAppointments(),
@@ -32,6 +27,12 @@ class PBookingBloc extends Bloc<PBookingEvent, PBookingState> {
         onError: (error, stackTrace) => ErrorUpdatingStream(error.toString()),
       );
     });
+    add(SubscribeToStreamEvent());
+    on<PStatusToggleChanged>((event, emit) {
+      selectedIndex = event.index;
+      emit(StatusToggleChanged());
+    });
+
     on<AcceptAppointmentEvent>((event, emit) async {
       final appointment = event.appointment;
       await supabae.acceptAppointment(appointment.id!);

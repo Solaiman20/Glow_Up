@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:glowup/CustomWidgets/Customer/Categories/Categories_widget.dart';
+import 'package:glowup/CustomWidgets/Customer/ProvidersProfileDetails/provider_category_tag.dart';
 import 'package:glowup/CustomWidgets/Customer/Services/service_card.dart';
 import 'package:glowup/Repositories/models/provider.dart';
 import 'package:glowup/Screens/Customer/ProvidersProfileDetails/bloc/providers_profile_details_bloc.dart';
@@ -131,21 +132,21 @@ class ProvidersProfileDetailsScreen extends StatelessWidget {
                       ),
                       SizedBox(height: 16.h),
                       Padding(
-                        padding: EdgeInsets.only(left: 32.w),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 8.w,
+                          vertical: 8.h,
+                        ),
                         child: SizedBox(
                           width: context.getScreenWidth(size: 1),
-                          height: 90.h,
+                          height: 40.h,
                           child: ListView.builder(
                             scrollDirection: Axis.horizontal,
                             itemCount: categories.length,
                             itemBuilder: (context, index) {
                               return Padding(
                                 padding: EdgeInsets.symmetric(horizontal: 8.w),
-                                child: Categories(
-                                  height: 50,
-                                  width: 50,
+                                child: ProviderCategoryTag(
                                   label: context.tr(categories[index]),
-                                  svgIconPath: mainIcons[index],
                                   isSelected: bloc.selectedIndex == index,
                                   onTap: () {
                                     bloc.selectedCategory = categories[index];
