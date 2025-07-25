@@ -103,10 +103,10 @@ class HomeScreen extends StatelessWidget {
                       const SizedBox(height: 32),
 
                       Padding(
-                        padding: EdgeInsets.only(left: 32.w),
+                        padding: EdgeInsets.symmetric(horizontal: 8.w),
                         child: SizedBox(
                           width: context.getScreenWidth(size: 1),
-                          height: 90.h,
+                          height: 100.h,
                           child: ListView.builder(
                             scrollDirection: Axis.horizontal,
                             itemCount: categories.length,

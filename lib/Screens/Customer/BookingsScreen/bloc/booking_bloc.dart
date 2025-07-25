@@ -10,10 +10,12 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   final supabase = GetIt.I.get<SupabaseConnect>();
   Map<int, List<Appointment?>> appointmentsMap = {};
   int selectedIndex = 0;
+  double providerRating = 0.0;
+  double stylistRating = 0.0;
 
   BookingBloc() : super(BookingInitial()) {
     on<SubscribeToStreamEvent>((event, emit) async {
-      await emit.forEach<List<Appointment?>>(
+      await emit.forEach<List<Appointment>>(
         GetIt.I.get<SupabaseConnect>().watchUserAppointments(),
         onData: (appointments) {
           appointmentsMap = GetIt.I.get<SupabaseConnect>().getUserAppointments(
@@ -25,7 +27,20 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
         onError: (error, stackTrace) => ErrorUpdatingStream(error.toString()),
       );
     });
-    add(SubscribeToStreamEvent());
+    on<CustomerRatingEvent>((event, emit) async {
+      try {
+        await supabase.rateProviderAndStylist(
+          providerRating: event.providerRating,
+          stylistRating: event.stylistRating,
+          appointmentId: event.appointmentId,
+          stylistId: event.stylistId,
+          providerId: event.providerId,
+        );
+        emit(CustomerRatingSuccess("Rating submitted successfully!"));
+      } catch (e) {
+        emit(CustomerRatingError("Error submitting rating: ${e.toString()}"));
+      }
+    });
 
     on<StatusToggleEvent>((event, emit) {
       selectedIndex = event.index;
@@ -43,5 +58,6 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
         emit(ServicePayError("Error processing payment: ${e.toString()}"));
       }
     });
+    add(SubscribeToStreamEvent());
   }
 }

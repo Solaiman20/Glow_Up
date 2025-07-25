@@ -1,21 +1,34 @@
+// ignore_for_file: public_member_api_docs, sort_constructors_first
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:moyasar/moyasar.dart';
+
 import 'package:glowup/CustomWidgets/Shared/custom_elevated_button.dart';
 import 'package:glowup/Repositories/models/appointment.dart';
 import 'package:glowup/Styles/app_colors.dart';
-import 'package:moyasar/moyasar.dart';
 
 class BookingCard extends StatelessWidget {
   final Appointment appointment;
   final Function() onPay;
+  final void Function(double) onStylistRatingUpdate;
+  final void Function(double) onProviderRatingUpdate;
+  bool alreadyRated = false;
+  final Function()? onRate;
 
-  const BookingCard({
+  BookingCard({
     super.key,
     required this.appointment,
     required this.onPay,
+    required this.alreadyRated,
+    required this.onRate,
+
+    required this.onStylistRatingUpdate,
+    required this.onProviderRatingUpdate,
   });
 
   @override
@@ -91,6 +104,7 @@ class BookingCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 10),
       padding: const EdgeInsets.all(16),
+
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
@@ -136,6 +150,36 @@ class BookingCard extends StatelessWidget {
               ),
             ],
           ),
+          if (appointment.status == "Completed" && !alreadyRated) ...[
+            Text("Rate The Salon"),
+            RatingBar.builder(
+              itemSize: 30.sp,
+              allowHalfRating: true,
+              itemBuilder: (context, index) {
+                return Icon(Icons.star, color: Colors.amber);
+              },
+              onRatingUpdate: onProviderRatingUpdate,
+              tapOnlyMode: true,
+            ),
+            Text("Rate The stylist"),
+            RatingBar.builder(
+              itemSize: 30.sp,
+              allowHalfRating: true,
+              itemBuilder: (context, index) {
+                return Icon(Icons.star, color: Colors.amber);
+              },
+              onRatingUpdate: onStylistRatingUpdate,
+              tapOnlyMode: true,
+            ),
+            SizedBox(height: 16.h),
+            CustomElevatedButton(
+              text: "Rate",
+              onTap: onRate!,
+              width: 250,
+              height: 30,
+            ),
+          ],
+
           if (appointment.status == "Accepted") ...[
             SizedBox(height: 16.h),
             CustomElevatedButton(

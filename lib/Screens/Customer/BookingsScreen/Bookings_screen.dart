@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -15,6 +17,8 @@ class BookingsScreen extends StatelessWidget {
       child: BlocBuilder<BookingBloc, BookingState>(
         builder: (context, state) {
           final bloc = context.read<BookingBloc>();
+          final ratings = bloc.supabase.userProfile?.ratings;
+
           return Scaffold(
             body: Padding(
               padding: EdgeInsets.all(20.h),
@@ -51,6 +55,29 @@ class BookingsScreen extends StatelessWidget {
                           final appointments =
                               bloc.appointmentsMap[bloc.selectedIndex] ?? [];
                           return BookingCard(
+                            onRate: () {
+                              bloc.add(
+                                CustomerRatingEvent(
+                                  appointmentId: appointments[index]!.id!,
+                                  stylistRating: bloc.stylistRating,
+                                  providerRating: bloc.providerRating,
+                                  providerId: appointments[index]!.provider!.id,
+                                  stylistId: appointments[index]!.stylist!.id!,
+                                ),
+                              );
+                            },
+                            onProviderRatingUpdate: (rating) {
+                              bloc.providerRating = rating;
+                            },
+                            onStylistRatingUpdate: (rating) {
+                              bloc.stylistRating = rating;
+                            },
+
+                            alreadyRated:
+                                ratings != null &&
+                                ratings.contains(
+                                  appointments[index]!.id.toString(),
+                                ),
                             appointment: appointments[index]!,
                             onPay: () {
                               bloc.add(

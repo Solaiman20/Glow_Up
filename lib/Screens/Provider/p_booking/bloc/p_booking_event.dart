@@ -23,3 +23,9 @@ final class CompleteAppointmentEvent extends PBookingEvent {
   final Appointment appointment;
   CompleteAppointmentEvent(this.appointment);
 }
+
+final class ProviderRatingEvent extends PBookingEvent {
+  final int appointmentId;
+  final String customerId;
+  ProviderRatingEvent({required this.appointmentId, required this.customerId});
+}

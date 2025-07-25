@@ -17,6 +17,7 @@ class PBookingsScreen extends StatelessWidget {
       child: BlocBuilder<PBookingBloc, PBookingState>(
         builder: (context, state) {
           final bloc = context.read<PBookingBloc>();
+          final ratings = bloc.supabase.theProvider?.ratings;
           return BlocListener<PBookingBloc, PBookingState>(
             listener: (context, state) {
               if (state is ErrorUpdatingStream) {
@@ -100,6 +101,24 @@ class PBookingsScreen extends StatelessWidget {
                                         .selectedIndex]![index],
                                   ),
                                 ),
+                                onCustomerRatingUpdate: (rating) {
+                                  bloc.customerRating = rating;
+                                },
+                                onRate: () {
+                                  bloc.add(
+                                    ProviderRatingEvent(
+                                      appointmentId: bloc
+                                          .appointmentsMap[bloc
+                                              .selectedIndex]![index]
+                                          .id!,
+                                      customerId:
+                                          appointments[index].customerId,
+                                    ),
+                                  );
+                                },
+                                alreadyRated:
+                                    ratings != null &&
+                                    ratings.contains(appointments[index].id!),
                               );
                             },
                           ),

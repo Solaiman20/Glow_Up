@@ -5,7 +5,6 @@ import 'dart:developer';
 import 'dart:io';
 
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:glowup/Repositories/models/appointment.dart';
@@ -62,6 +61,7 @@ class SupabaseConnect {
       userProfile = Profile.fromJson(userProfileResponse);
 
       if (userProfile?.role == "customer") {
+        await getUserRatings();
         await getDistancesFromUser();
         linkData();
       } else if (userProfile?.role == "provider") {
@@ -77,6 +77,7 @@ class SupabaseConnect {
             .eq("id", user!.id)
             .single();
         userProfile = Profile.fromJson(userProfileRes);
+        await getProviderRatings();
       }
     } else {
       log("No user is currently authenticated");
@@ -175,6 +176,108 @@ class SupabaseConnect {
     log("Fetchdata");
   }
 
+  Future<void> getUserRatings() async {
+    try {
+      final resClient = supabase.client;
+      final userProvidersRatingsResponse = await resClient
+          .from("provider_ratings")
+          .select("*")
+          .eq("user_id", userProfile!.id);
+      if (userProvidersRatingsResponse.isEmpty) {
+        log("No User Ratings found");
+        return;
+      }
+      userProfile!.ratings = List<String>.from(
+        userProvidersRatingsResponse.map((e) => e['appointment_id'] as String),
+      );
+
+      final userStylistsRatingsResponse = await resClient
+          .from("stylists_ratings")
+          .select("*")
+          .eq("user_id", userProfile!.id);
+      if (userStylistsRatingsResponse.isEmpty) {
+        log("No User Stylists Ratings found");
+        return;
+      }
+      userProfile!.ratings.addAll(
+        List<String>.from(
+          userStylistsRatingsResponse.map((e) => e['appointment_id'] as String),
+        ),
+      );
+    } catch (e) {
+      log("Error fetching user ratings: $e");
+    }
+    log("getUserRatings");
+  }
+
+  Future<void> rateProviderAndStylist({
+    required double providerRating,
+    required double stylistRating,
+    required int appointmentId,
+    required String stylistId,
+    required String providerId,
+  }) async {
+    try {
+      final resClient = supabase.client;
+      await resClient.from("provider_ratings").upsert({
+        'appointment_id': appointmentId,
+        'provider_id': providerId,
+        'user_id': userProfile!.id,
+        'rating': providerRating,
+      });
+      await resClient.from("stylists_ratings").insert({
+        'appointment_id': appointmentId,
+        'stylist_id': stylistId,
+        'user_id': userProfile!.id,
+        'rating': stylistRating,
+      });
+      userProfile!.ratings.add(appointmentId.toString());
+      log("Ratings submitted successfully");
+    } catch (e) {
+      log("Error submitting ratings: $e");
+    }
+  }
+
+  Future<void> getProviderRatings() async {
+    try {
+      final resClient = supabase.client;
+      final providerRatingsResponse = await resClient
+          .from("customer_ratings")
+          .select("*")
+          .eq("provider_id", theProvider!.id);
+      if (providerRatingsResponse.isEmpty) {
+        log("No Provider Ratings found");
+        return;
+      }
+      theProvider!.ratings = List<int>.from(
+        providerRatingsResponse.map((e) => e['appointment_id']),
+      );
+    } catch (e) {
+      log("Error fetching provider ratings: $e");
+    }
+    log("getProviderRatings");
+  }
+
+  Future<void> rateCustomer({
+    required double rating,
+    required String customerId,
+    required int appointmentId,
+  }) async {
+    try {
+      final resClient = supabase.client;
+      await resClient.from("customer_ratings").upsert({
+        'appointment_id': appointmentId,
+        'customer_id': customerId,
+        'provider_id': theProvider!.id,
+        'rating': rating,
+      });
+      theProvider!.ratings.add(appointmentId);
+      log("Customer rating submitted successfully");
+    } catch (e) {
+      log("Error submitting customer rating: $e");
+    }
+  }
+
   Future<void> getAppointments() async {
     try {
       final resClient = supabase.client;
@@ -191,7 +294,6 @@ class SupabaseConnect {
     } catch (e) {
       log("Error fetching appointments: $e");
     }
-    log("getAppointments");
   }
 
   Future<void> getServiceStylists() async {
@@ -616,63 +718,72 @@ class SupabaseConnect {
     log("Data linked in ${stopwatch.elapsedMicroseconds} µs");
   }
 
-  Map<int, List<Appointment?>> getUserAppointments(
-    List<Appointment?> appointmentsStream,
+  Map<int, List<Appointment>> getUserAppointments(
+    List<Appointment> appointmentsStream,
   ) {
-    List<Appointment?> pendingAppointments = [];
-    List<Appointment?> statusAppointments = [];
-    List<Appointment?> completedAppointments = [];
-    List<Appointment?> paidAppointments = [];
-    Map<int, List<Appointment?>> userAppointments = {
+    List<Appointment> pendingAppointments = [];
+    List<Appointment> statusAppointments = [];
+    List<Appointment> completedAppointments = [];
+    List<Appointment> paidAppointments = [];
+    Map<int, List<Appointment>> userAppointments = {
       0: pendingAppointments,
       1: statusAppointments,
       2: paidAppointments,
       3: completedAppointments,
     };
     // linking appointments with their stylist
+
+    final now = DateTime.now();
+    final todayMidnight = DateTime(now.year, now.month, now.day);
+    final isoTodayMidnight = todayMidnight;
     if (appointmentsStream.isNotEmpty) {
-      for (Appointment? appointment in appointmentsStream) {
+      for (Appointment appointment in appointmentsStream) {
         for (Stylist stylist in stylists) {
-          if (appointment!.stylistId == stylist.id) {
+          if (appointment.stylistId == stylist.id) {
             appointment.stylist = stylist;
           }
         }
         // linking appointments with their stylist
         for (Stylist stylist in stylists) {
-          if (appointment!.stylistId == stylist.id) {
+          if (appointment.stylistId == stylist.id) {
             appointment.stylist = stylist;
           }
         }
         for (Provider provider in providers) {
-          if (appointment!.providerId == provider.id) {
+          if (appointment.providerId == provider.id) {
             appointment.provider = provider;
           }
         }
         for (Services service in services) {
-          if (appointment!.serviceId == service.id) {
+          if (appointment.serviceId == service.id) {
             appointment.service = service;
           }
         }
       }
 
       for (var appointment in appointmentsStream) {
-        if (appointment!.customerId == userProfile!.id) {
-          switch (appointment.status) {
-            case "Pending":
-              pendingAppointments.add(appointment);
-              break;
-            case "Accepted":
-              statusAppointments.add(appointment);
-              break;
-            case "Completed":
-              completedAppointments.add(appointment);
-              break;
-            case "Rejected":
-              statusAppointments.add(appointment);
-              break;
-            case "Paid":
-              paidAppointments.add(appointment);
-              break;
+        if (appointment.customerId == userProfile!.id) {
+          if (!DateTime.parse(
+                appointment.appointmentDate,
+              ).isBefore(isoTodayMidnight) ||
+              appointment.status == "Completed") {
+            switch (appointment.status) {
+              case "Pending":
+                pendingAppointments.add(appointment);
+                break;
+              case "Accepted":
+                statusAppointments.add(appointment);
+                break;
+              case "Completed":
+                completedAppointments.add(appointment);
+                break;
+              case "Rejected":
+                statusAppointments.add(appointment);
+                break;
+              case "Paid":
+                paidAppointments.add(appointment);
+                break;
+            }
           }
         }
       }
@@ -817,11 +928,9 @@ class SupabaseConnect {
     log("payForAppointment");
   }
 
-  Stream<List<Appointment?>> watchUserAppointments() {
+  Stream<List<Appointment>> watchUserAppointments() {
     log("watchUserAppointments called");
-    final now = DateTime.now();
-    final todayMidnight = DateTime(now.year, now.month, now.day);
-    final isoTodayMidnight = todayMidnight;
+
     // listen on any change (INSERT, UPDATE, DELETE) keyed by 'id'
     return supabase.client
         .from('appointments') // filter to this provider
@@ -832,11 +941,7 @@ class SupabaseConnect {
         .map(
           (records) => records.map((e) {
             var appointment = Appointment.fromJson(e);
-            if (DateTime.parse(
-              appointment.appointmentDate,
-            ).isBefore(isoTodayMidnight)) {
-              return appointment;
-            }
+            return appointment;
           }).toList(),
         );
   }
@@ -1277,6 +1382,7 @@ class SupabaseConnect {
 
     if (userProfile?.role == "customer") {
       await getDistancesFromUser();
+      await getUserRatings();
       linkData();
     } else if (userProfile?.role == "provider") {
       final providerResponse = await resClient
@@ -1285,6 +1391,7 @@ class SupabaseConnect {
           .eq("id", user.id)
           .single();
       theProvider = Provider.fromJson(providerResponse);
+      await getProviderRatings();
       linkData();
       // Fetch provider-specific data if needed
     }

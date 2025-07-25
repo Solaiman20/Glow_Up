@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:glowup/CustomWidgets/shared/custom_elevated_button.dart';
 import 'package:glowup/Repositories/models/appointment.dart';
@@ -9,13 +10,19 @@ class PBookingCard extends StatelessWidget {
   final VoidCallback? onAccept;
   final VoidCallback? onDecline;
   final VoidCallback? onComplete;
+  final void Function(double) onCustomerRatingUpdate;
+  final void Function()? onRate;
+  final bool alreadyRated;
 
   const PBookingCard({
     super.key,
     required this.appointment,
-    this.onAccept,
-    this.onDecline,
-    this.onComplete,
+    required this.onAccept,
+    required this.onDecline,
+    required this.onComplete,
+    required this.onCustomerRatingUpdate,
+    required this.onRate,
+    required this.alreadyRated,
   });
 
   bool get isPending => appointment.status.toLowerCase() == 'pending';
@@ -29,85 +36,114 @@ class PBookingCard extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(20.r),
       ),
-      child: Stack(
+      child: Column(
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          Stack(
             children: [
-              const Text(
-                "Service",
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 16,
-                  color: AppColors.darkText,
-                ),
-              ),
-              SizedBox(height: 12.h),
-              _InfoRow(
-                icon: Icons.calendar_today_outlined,
-                text: appointment.appointmentDate,
-              ),
-              SizedBox(height: 8.h),
-              _InfoRow(
-                icon: Icons.access_time_rounded,
-                text:
-                    "${appointment.appointmentStart} - ${appointment.appointmentEnd}",
-              ),
-              SizedBox(height: 8.h),
-              _InfoRow(
-                icon: Icons.person_outline,
-                text: appointment.stylist?.name ?? "Stylist",
-              ),
-              SizedBox(height: 8.h),
-              _InfoRow(
-                icon: Icons.store_outlined,
-                text: appointment.provider?.name ?? "Salon",
-              ),
-              if (isPending) ...[
-                SizedBox(height: 16.h),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    ElevatedButton(
-                      onPressed: onDecline,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                      ),
-                      child: const Text("Decline"),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Service",
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                      color: AppColors.darkText,
                     ),
-                    SizedBox(width: 10.w),
-                    ElevatedButton(
-                      onPressed: onAccept,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.green,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
+                  ),
+                  SizedBox(height: 12.h),
+                  _InfoRow(
+                    icon: Icons.calendar_today_outlined,
+                    text: appointment.appointmentDate,
+                  ),
+                  SizedBox(height: 8.h),
+                  _InfoRow(
+                    icon: Icons.access_time_rounded,
+                    text:
+                        "${appointment.appointmentStart} - ${appointment.appointmentEnd}",
+                  ),
+                  SizedBox(height: 8.h),
+                  _InfoRow(
+                    icon: Icons.person_outline,
+                    text: appointment.stylist?.name ?? "Stylist",
+                  ),
+                  SizedBox(height: 8.h),
+                  _InfoRow(
+                    icon: Icons.store_outlined,
+                    text: appointment.provider?.name ?? "Salon",
+                  ),
+                  if (isPending) ...[
+                    SizedBox(height: 16.h),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        ElevatedButton(
+                          onPressed: onDecline,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                          ),
+                          child: const Text("Decline"),
                         ),
-                      ),
-                      child: const Text("Accept"),
+                        SizedBox(width: 10.w),
+                        ElevatedButton(
+                          onPressed: onAccept,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.green,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                          ),
+                          child: const Text("Accept"),
+                        ),
+                      ],
                     ),
                   ],
-                ),
-              ],
-              if (appointment.status == "Paid") ...[
-                SizedBox(height: 16.h),
-                CustomElevatedButton(
-                  text: "Completed",
-                  onTap: onComplete,
-                  width: 250,
-                  height: 30,
-                ),
-              ],
+                  if (appointment.status == "Paid") ...[
+                    SizedBox(height: 16.h),
+                    CustomElevatedButton(
+                      text: "Completed",
+                      onTap: onComplete,
+                      width: 250,
+                      height: 30,
+                    ),
+                  ],
+                ],
+              ),
+              Positioned(
+                bottom: isPending ? 48.h : 0,
+                right: 0,
+                child: _StatusBadge(status: appointment.status),
+              ),
             ],
           ),
-          Positioned(
-            bottom: isPending ? 48.h : 0,
-            right: 0,
-            child: _StatusBadge(status: appointment.status),
-          ),
+          if (appointment.status == "Completed" && !alreadyRated) ...[
+            SizedBox(height: 16.h),
+            Center(child: Text("Rate The Customer")),
+            Center(
+              child: RatingBar.builder(
+                itemSize: 30.sp,
+                allowHalfRating: true,
+                itemBuilder: (context, index) {
+                  return Icon(Icons.star, color: Colors.amber);
+                },
+                onRatingUpdate: onCustomerRatingUpdate,
+                tapOnlyMode: true,
+              ),
+            ),
+
+            SizedBox(height: 16.h),
+            Center(
+              child: CustomElevatedButton(
+                text: "Rate",
+                onTap: onRate!,
+                width: 250,
+                height: 30,
+              ),
+            ),
+          ],
         ],
       ),
     );

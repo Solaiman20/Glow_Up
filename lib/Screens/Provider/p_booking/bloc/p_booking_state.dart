@@ -26,3 +26,15 @@ final class CompleteAppointmentError extends PBookingState {
 
   CompleteAppointmentError(this.errorMessage);
 }
+
+final class ProviderRatingSuccess extends PBookingState {
+  final String message;
+
+  ProviderRatingSuccess(this.message);
+}
+
+final class ProviderRatingError extends PBookingState {
+  final String errorMessage;
+
+  ProviderRatingError(this.errorMessage);
+}

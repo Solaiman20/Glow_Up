@@ -159,7 +159,11 @@ class ProviderProfileScreen extends StatelessWidget {
                                     borderRadius: BorderRadius.circular(60),
                                     child: CachedNetworkImage(
                                       imageUrl:
-                                          bloc.supabase.theProvider!.avatarUrl!,
+                                          bloc
+                                              .supabase
+                                              .theProvider
+                                              ?.avatarUrl! ??
+                                          "",
                                       height: 120.h,
                                       width: 120.w,
                                       fit: BoxFit.cover,

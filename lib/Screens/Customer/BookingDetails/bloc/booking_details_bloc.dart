@@ -44,7 +44,9 @@ class BookingDetailsBloc
     });
     on<SelectTimeEvent>((event, emit) {
       var format = DateFormat('HH:mm');
-      selectedTime = format.parse(event.selectedTime.toString());
+      selectedTime = format.parse(
+        "${event.selectedTime.hour}:${event.selectedTime.minute}",
+      );
 
       log("Selected time: ${selectedTime!.hour}:${selectedTime!.minute}");
       emit(TimeSelectedState());

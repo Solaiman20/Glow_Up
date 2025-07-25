@@ -3,7 +3,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:glowup/CustomWidgets/Customer/Categories/Categories_widget.dart';
 import 'package:glowup/CustomWidgets/Customer/ProvidersProfileDetails/provider_category_tag.dart';
 import 'package:glowup/CustomWidgets/Customer/Services/service_card.dart';
 import 'package:glowup/Repositories/models/provider.dart';
@@ -18,13 +17,6 @@ class ProvidersProfileDetailsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final mainIcons = [
-      'assets/svgs/hair_comb 1.svg',
-      'assets/svgs/Make_up.svg',
-      'assets/svgs/Nail_polish.svg',
-      'assets/svgs/Make_up.svg',
-      'assets/svgs/Make_up.svg',
-    ];
     return BlocProvider(
       create: (context) => ProvidersProfileDetailsBloc(),
       child:

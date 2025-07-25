@@ -28,3 +28,15 @@ final class ServicePayError extends BookingState {
 
   ServicePayError(this.errorMessage);
 }
+
+final class CustomerRatingSuccess extends BookingState {
+  final String message;
+
+  CustomerRatingSuccess(this.message);
+}
+
+final class CustomerRatingError extends BookingState {
+  final String errorMessage;
+
+  CustomerRatingError(this.errorMessage);
+}

@@ -102,7 +102,8 @@ class ProfileScreen extends StatelessWidget {
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(60.r),
                           child: CachedNetworkImage(
-                            imageUrl: bloc.supabase.userProfile!.avatarUrl!,
+                            imageUrl:
+                                bloc.supabase.userProfile?.avatarUrl! ?? "",
                             height: 120.h,
                             width: 120.w,
                             fit: BoxFit.cover,

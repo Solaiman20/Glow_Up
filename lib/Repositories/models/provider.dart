@@ -27,6 +27,7 @@ class Provider {
   late String bio;
   String? avatarUrl;
   String? bannerUrl;
+  List<int> ratings = [];
 
   late String? mapsUrl;
   String? distanceFromUser;
